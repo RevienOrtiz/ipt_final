@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>File Upload System</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(to bottom right, #dbeafe, #fef3c7);
+    margin: 0; padding: 0;
+    color: #333;
+  }
+  .container {
+    max-width: 900px;
+    margin: 2rem auto;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.1);
+    padding: 2rem;
+  }
+  h1, h2 {
+    text-align: center;
+    color: #1e40af;
+  }
+  .upload-area {
+    border: 3px dashed #60a5fa;
+    border-radius: 12px;
+    padding: 3rem;
+    text-align: center;
+    color: #3b82f6;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  .upload-area.dragover {
+    background-color: #bfdbfe;
+  }
+  input[type="file"] {
+    display: none;
+  }
+  button.upload-btn {
+    margin-top: 1rem;
+    background-color: #2563eb;
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  button.upload-btn:hover {
+    background-color: #1d4ed8;
+  }
+  .metadata-preview {
+    margin-top: 2rem;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+  }
+  .metadata-preview ul {
+    list-style: none;
+    padding: 0;
+  }
+  .metadata-preview li {
+    padding: 0.3rem 0;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 3rem;
+  }
+  th, td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  th {
+    background-color: #bfdbfe;
+    text-align: left;
+  }
+  a.action-btn {
+    margin-right: 1rem;
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  a.action-btn:hover {
+    text-decoration: underline;
+  }
+  @media (max-width: 600px) {
+    .upload-area {
+      padding: 2rem 1rem;
+    }
+    th, td {
+      padding: 0.5rem;
+      font-size: 0.9rem;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <h1>Welcome to the File Upload System</h1>
+  <p style="text-align:center; color:#555;">Upload your files and generate XML metadata easily.</p>
+
+  <label for="fileInput" class="upload-area" id="uploadArea">
+    <p>Click or drag & drop your file here</p>
+    <p style="font-size: 0.9rem; color: #9ca3af;">Supported: PDF, DOCX, JPG, PNG, etc.</p>
+    <input type="file" id="fileInput" />
+  </label>
+
+  <button class="upload-btn" id="uploadBtn" disabled>Upload File</button>
+
+  <div class="metadata-preview" id="metadataPreview" style="display:none;">
+    <h2>Metadata Preview</h2>
+    <ul>
+      <li><strong>Name:</strong> <span id="metaName"></span></li>
+      <li><strong>Size:</strong> <span id="metaSize"></span> KB</li>
+      <li><strong>Type:</strong> <span id="metaType"></span></li>
+      <li><strong>Date:</strong> <span id="metaDate"></span></li>
+    </ul>
+  </div>
+
+  <h2>Uploaded Files</h2>
+  <table>
+    <thead>
+      <tr><th>File Name</th><th>Type</th><th>Size (KB)</th><th>Date Uploaded</th><th>Actions</th></tr>
+    </thead>
+    <tbody id="fileTableBody">
+      <!-- Static sample rows -->
+      <tr>
+        <td>example.pdf</td><td>application/pdf</td><td>1024</td><td>2025-05-15 14:30</td>
+        <td>
+          <a href="#" class="action-btn">View</a>
+          <a href="#" class="action-btn">Download</a>
+          <a href="#" class="action-btn" style="color:#dc2626;">Delete</a>
+        </td>
+      </tr>
+      <tr>
+        <td>photo.png</td><td>image/png</td><td>350</td><td>2025-05-14 09:15</td>
+        <td>
+          <a href="#" class="action-btn">View</a>
+          <a href="#" class="action-btn">Download</a>
+          <a href="#" class="action-btn" style="color:#dc2626;">Delete</a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+<script>
+  const fileInput = document.getElementById('fileInput');
+  const uploadBtn = document.getElementById('uploadBtn');
+  const metadataPreview = document.getElementById('metadataPreview');
+  const metaName = document.getElementById('metaName');
+  const metaSize = document.getElementById('metaSize');
+  const metaType = document.getElementById('metaType');
+  const metaDate = document.getElementById('metaDate');
+  const uploadArea = document.getElementById('uploadArea');
+
+  // Highlight drop area on dragover
+  uploadArea.addEventListener('dragover', e => {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+  });
+  uploadArea.addEventListener('dragleave', e => {
+    uploadArea.classList.remove('dragover');
+  });
+  uploadArea.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+    const files = e.dataTransfer.files;
+    if(files.length) {
+      fileInput.files = files;
+      showMetadata(files[0]);
+      uploadBtn.disabled = false;
+    }
+  });
+
+  fileInput.addEventListener('change', () => {
+    if(fileInput.files.length > 0) {
+      showMetadata(fileInput.files[0]);
+      uploadBtn.disabled = false;
+    } else {
+      metadataPreview.style.display = 'none';
+      uploadBtn.disabled = true;
+    }
+  });
+
+  function showMetadata(file) {
+    metaName.textContent = file.name;
+    metaSize.textContent = (file.size / 1024).toFixed(2);
+    metaType.textContent = file.type || 'N/A';
+    metaDate.textContent = new Date().toLocaleString();
+    metadataPreview.style.display = 'block';
+  }
+
+  uploadBtn.addEventListener('click', () => {
+    alert('This is a static demo. Implement backend logic to handle uploads.');
+  });
+</script>
+
+</body>
+</html>
